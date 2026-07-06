@@ -1,9 +1,9 @@
 import pandas as pd
 import os
 class TrajectoryLogger:
-    def __init__(self, output_dir="src/simulation/trajectory_data"):
+    def __init__(self, output_dir="src/simulation/trajectory_data", buffer_size=1000):
         self.trajectory_data = []
-        self.buffer_size = 1000  # Adjust the buffer size as needed
+        self.buffer_size = buffer_size
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -43,9 +43,11 @@ class TrajectoryLogger:
         })
 
         if len(self.trajectory_data) >= self.buffer_size:
-            self.save_to_parquet(os.path.join(self.output_dir, f"trajectory_data_{episode_id}.parquet"))
-    
+            self._chunk_counter = getattr(self, "_chunk_counter", 0) + 1
+            self.save_to_parquet(
+                os.path.join(self.output_dir, f"trajectory_data_ep{episode_id}_chunk{self._chunk_counter}.parquet")
+            )
     def save_to_parquet(self, file_path):
         df = pd.DataFrame(self.trajectory_data)
         df.to_parquet(file_path, index=False)
-        self.trajectory_data = []  # Clear the buffer after saving
+        self.trajectory_data = [] 
